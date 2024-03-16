@@ -43,6 +43,15 @@ bool role = true;  // true = TX role, false = RX role
 float payload = 0.0;
 
 
+void reverse(){
+  analogWrite(Motor_right_PWM,255 ); // right motor
+  digitalWrite(Motor_right_direction,Reverse); //right
+  analogWrite(Motor_left_PWM, 255); // left
+  digitalWrite(Motor_left_direction,Reverse); //left
+  // delay(delay_time);
+}
+
+
 void forward(){
   analogWrite(Motor_right_PWM,Right_forward_speed); // right motor
   digitalWrite(Motor_right_direction,Forward); //right
@@ -82,10 +91,39 @@ void IR_proximity_read(){    // read only front IR sensor
   IR_left/=n;
 }
 
+
+
 void Obstacle_avoidance(){
+      Serial.print(F(" IR_front = "));
+      Serial.print(IR_front);
+      Serial.println();
+      Serial.print(F(" IR_right = "));
+      Serial.print(IR_right);
+      Serial.println();
+
+      Serial.print(F(" IR_right_front = "));
+      Serial.print(IR_right_front);
+      Serial.println();
+
+      Serial.print(F(" IR_left = "));
+      Serial.print(IR_left);
+      Serial.println();
+
+      Serial.print(F(" IR_left_front = "));
+      Serial.print(IR_left_front);
+      Serial.println();
+
+  // if ()
+
   if (IR_front<IR_threshold || IR_right<IR_threshold || IR_right_front<IR_threshold || IR_left<IR_threshold || IR_left_front<IR_threshold){
+      Serial.print("DUMMYYYYY");
+      forward();
+
+
+
+      
       digitalWrite(LED1,HIGH);
-      Stop();
+      // Stop();
   }
 }
 
@@ -108,17 +146,17 @@ void Timer_overflow() {   // every 400 ms is called
   Right_compensatory =  Desired - Right_counter;
   Left_compensatory  =  Desired - Left_counter;
 
-  Serial.print("Left = ");
-  Serial.print(Left_counter);
-  Serial.print(" , ");
-  Serial.print("  Right = ");
-  Serial.println(Right_counter);
+  // Serial.print("Left = ");
+  // Serial.print(Left_counter);
+  // Serial.print(" , ");
+  // Serial.print("  Right = ");
+  // Serial.println(Right_counter);
 
   // a basic proportional control (disable these two lines for Open-loop control)
   Right_forward_speed +=  slope * Right_compensatory;
   Left_forward_speed  +=  slope *  Left_compensatory;
 
-  forward();  // update PWM set-point
+  reverse();  // update PWM set-point
 
   //reset counters
   Left_counter=0;
@@ -168,21 +206,22 @@ void setup() {
   pinMode(Right_interruptPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(Right_interruptPin), Right_int_counter, CHANGE);
   // setup Timer2 for motor control
-  MsTimer2::set(400, Timer_overflow); // 400ms period
+  MsTimer2::set(100, Timer_overflow); // 400ms period
   MsTimer2::start();
   //set PWM set-point
-  forward();
+  reverse();
 }
 
 //------------------------------------------------- Main loop
 void loop() {
- digitalWrite(LED1,HIGH); //Top LED
+//  digitalWrite(LED1,HIGH); //Top LED
  IR_proximity_read();
  Obstacle_avoidance();
- digitalWrite(LED1,LOW); //Top LED
+//  digitalWrite(LED1,LOW); //Top LED
 
   unsigned long start_timer = micros();                // start the timer
   bool report = radio.write(&payload, sizeof(float));  // transmit & save the report
+  // bool coordinatesSent = radio.write(&left, sizeof(long int));
   unsigned long end_timer = micros();                  // end the timer
 
   if (report) {
@@ -191,13 +230,13 @@ void loop() {
     Serial.print(end_timer - start_timer);  // print the timer result
     Serial.print(F(" us. Sent: "));
     Serial.println(payload);  // print payload sent
-    payload += 0.01;          // increment float payload
+    payload += 0.2;          // increment float payload
   } else {
     Serial.println(F("Transmission failed or timed out"));  // payload was not delivered
   }
 
   // to make this example readable in the serial monitor
-  delay(1000);  // slow transmissions down by 1 second
+  delay(300);  // slow transmissions down by 1 second
 
 //  delay(100);
 }
