@@ -35,7 +35,7 @@ def update_blockage(maze, position, sensor_data, block_threshold):
     reverse_directions = {
         'right': 'left',
         'right_forward': 'left_forward',
-        'forward': 'down',   # 这里我假设'forward'方向的反方向是'down'
+        'forward': 'up',   # 这里我假设'forward'方向的反方向是'up'
         'left_forward': 'right_forward',
         'left': 'right'
     }
@@ -55,24 +55,29 @@ def update_blockage(maze, position, sensor_data, block_threshold):
                 reverse_dir = reverse_directions[direction]
                 maze[(neighbor_x, neighbor_y)][reverse_dir] = True
 
+                print("Blocked: ", direction, " at ", (x, y))
+                print("Blocked: ", reverse_dir, " at ", (neighbor_x, neighbor_y))
+
                 
 def print_maze(maze, size):
     # top wall
     print(" " + "_ " * size)
 
-    for y in range(size):
+    for x in range(size):
         # left wall
         print("|", end="")
 
-        for x in range(size):
+        for y in range(size):
             # bottom wall
-            if maze[(x, y)]['down']:
+            if x+1 < 5 and maze[(x+1, y)]['up']:
                 print("_", end="")
+            #if y > 0 and y+1 < 5 and maze[(x, y + 1)]['up']:  # check 'forward' of the previous block
+            #    print("_", end="")
             else:
                 print(" ", end="")
 
             # right wall
-            if x < size - 1:
+            if y < size - 1:
                 if maze[(x, y)]['right']:
                     print("|", end="")
                 else:
@@ -87,15 +92,33 @@ def print_maze(maze, size):
 
 if __name__ == "__main__":
     test_data = [
-        ([930, 950, 950, 950, 930], (1, 1)),
-        ([1023, 1023, 950, 1023, 1023], (2, 2)),
-        ([1023, 940, 940, 940, 1023], (3, 3)),
-        ([950, 950, 1023, 950, 950], (4, 4)),
+        # ([930, 950, 950, 950, 930], (1, 1)),
+        # ([1023, 1023, 950, 1023, 1023], (2, 2)),
+        # ([1023, 940, 940, 940, 1023], (3, 3)),
+        # ([950, 950, 1023, 950, 950], (4, 4)),
+        ([930, 950, 1023, 950, 930], (0, 0)),
+        ([930, 950, 950, 950, 930], (1, 0)),
+        ([930, 950, 950, 950, 930], (2, 0)),
+        ([930, 950, 950, 950, 930], (3, 0)),
+        ([949, 950, 1023, 950, 949], (4, 0)),
+
+        ([950, 950, 930, 950, 950], (0, 1)),
+        ([950, 950, 930, 950, 950], (0, 2)),
+        ([950, 950, 930, 950, 950], (0, 3)),
+        ([950, 950, 930, 950, 950], (0, 4)),
+
+
+        ([950, 950, 930, 950, 950], (4, 4))
+
+
     ]
 
-    # 用测试数据更新迷宫
+    # update maze
     for sensor_data, position in test_data:
         print("Update: ")
+
+        #print(maze)
+
         print_maze(maze, n)
 
         update_blockage(maze, position, sensor_data, unblocked_threshold)
