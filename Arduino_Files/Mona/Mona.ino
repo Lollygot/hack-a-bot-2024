@@ -1,5 +1,7 @@
 #include <MsTimer2.h>
 
+#define PI 3.14159265358979323846
+
 // motor direction mappings
 #define FORWARD 0
 #define BACKWARD 1
@@ -43,6 +45,13 @@ enum State {
 };
 // whether Mona robot is currently partway through turning or not
 State state = normal;
+
+// angle of 1 left/right rotation
+const double ROTATION_UNIT = 4 * PI / 49;
+
+double bearing = 0;
+
+int counter = 0;
 
 void irRead() {
   // IR enable
@@ -89,6 +98,10 @@ void left() {
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, FORWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
+  bearing -= ROTATION_UNIT;
+  if (bearing < 0) {
+    bearing += 2 * PI;
+  }
 }
 
 void right() {
@@ -96,6 +109,10 @@ void right() {
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, BACKWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
+  bearing += ROTATION_UNIT;
+  if (bearing > 2 * PI) {
+    bearing -= 2 * PI;
+  }
 }
 
 void stop() {
@@ -156,8 +173,10 @@ void printInfo() {
   // Serial.println(irRightFront);
   // Serial.print("Right IR reading: ");
   // Serial.println(irRight);
-  Serial.print("State: ");
-  Serial.println(state);
+  // Serial.print("State: ");
+  // Serial.println(state);
+  Serial.print("Bearing: ");
+  Serial.println(bearing);
   // Serial.println("----------------------");
 }
 
@@ -177,7 +196,7 @@ void loop() {
   digitalWrite(TOP_LED, HIGH);
   irRead();
   move();
-  printInfo();
+  // printInfo();
   digitalWrite(TOP_LED, LOW);
   delay(LOOP_DELAY);
 }
