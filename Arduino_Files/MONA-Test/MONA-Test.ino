@@ -2,9 +2,9 @@
 
 // pin config for basic platform test
 // Motors
-int Motor_right_PWM = 10;  //   0 (min speed) - 255 (max speed) 
+int Motor_right_PWM = 10;  //   0 (min speed) - 255 (max speed)
 int Motor_right_direction = 5;  //   0 Forward - 1 Reverse
-int Motor_left_PWM = 9;    //   0 (min speed) - 255 (max speed)  
+int Motor_left_PWM = 9;    //   0 (min speed) - 255 (max speed)
 int Motor_left_direction = 6;   //   0 Forward - 1 Reverse
 #define Forward 0
 #define Reverse 1
@@ -29,14 +29,14 @@ void setup() {
 void forward(){
   analogWrite(Motor_right_PWM,40); // right motor
   digitalWrite(Motor_right_direction,Forward); //right
-  analogWrite(Motor_left_PWM, 40); // left 
+  analogWrite(Motor_left_PWM, 40); // left
   digitalWrite(Motor_left_direction,Forward); //left
 }
 
 void reverse(int delay_time){
   analogWrite(Motor_right_PWM,120 ); // right motor
   digitalWrite(Motor_right_direction,Reverse); //right
-  analogWrite(Motor_left_PWM, 120); // left 
+  analogWrite(Motor_left_PWM, 120); // left
   digitalWrite(Motor_left_direction,Reverse); //left
   delay(delay_time);
 }
@@ -45,7 +45,7 @@ void right(int delay_time){
   reverse(50);
   analogWrite(Motor_right_PWM,120 ); // right motor
   digitalWrite(Motor_right_direction,Reverse); //right
-  analogWrite(Motor_left_PWM, 40); // left 
+  analogWrite(Motor_left_PWM, 40); // left
   digitalWrite(Motor_left_direction,Forward); //left
   delay(delay_time);
 }
@@ -54,15 +54,15 @@ void left(int delay_time){
   reverse(50);
   analogWrite(Motor_right_PWM,40 ); // right motor
   digitalWrite(Motor_right_direction,Forward); //right
-  analogWrite(Motor_left_PWM, 120); // left 
+  analogWrite(Motor_left_PWM, 120); // left
   digitalWrite(Motor_left_direction,Reverse); //left
   delay(delay_time);
 }
 
-// Variables for 5 IR proximity sensors 
+// Variables for 5 IR proximity sensors
 int IR_right,IR_right_front,IR_front,IR_left_front,IR_left;
 
-void IR_proximity_read(){    // read IR sensors 
+void IR_proximity_read(){    // read IR sensors
   int n=5;  // average parameter
   digitalWrite(IR_enable, HIGH);  //IR Enable
   IR_right=0;
@@ -82,7 +82,7 @@ void IR_proximity_read(){    // read IR sensors
   IR_right_front/=n;
   IR_front/=n;
   IR_left_front/=n;
-  IR_left/=n; 
+  IR_left/=n;
 }
 
 // obstacle avoidance
@@ -103,7 +103,7 @@ void Obstacle_avoidance(){
           left(500);
           digitalWrite(LED2,LOW);
       } else forward();
-  }  
+  }
 }
 
 // send IR readings to Serial Monitor
@@ -116,7 +116,7 @@ void Send_sensor_readings(){
  Serial.print(',');
  Serial.print(IR_left_front);
  Serial.print(',');
- Serial.println(IR_left);  
+ Serial.println(IR_left);
 }
 
 
@@ -125,7 +125,7 @@ void loop() {
 
  digitalWrite(LED1,HIGH); //Top LED
  IR_proximity_read();
- Send_sensor_readings(); 
+ Send_sensor_readings();
  Obstacle_avoidance();
  digitalWrite(LED1,LOW); //Top LED
 
