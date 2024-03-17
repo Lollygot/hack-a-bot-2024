@@ -1,10 +1,33 @@
 import pygame
+import math
+# import serial
+
+# serial_port = '/dev/ttyUSB0' 
+# baud_rate = 9600  
+# ser = serial.Serial(serial_port, baud_rate)
+# try:
+#     while True:
+#         serial_input = ser.readline().decode().strip()
+#         print("Received:", serial_input)
+
+# except KeyboardInterrupt:
+#     ser.close()
+#     print("Serial port closed")
+
+
+
+
 bot_1_x, bot_1_y = 2, 0
 bot_2_x, bot_2_y = 0, 2
 
 array_of_incoming_data = [
     (2, 0), # bot 1 initial
     (0, 2), # bot 2 inital
+    (1.2, 0.5), # bot 1 decimals
+    (0.5, 1.8), # bot 2 decimals
+    (1.8, 0.5), # bot 1 decimals
+    (0.5, 1.2), # bot 2 decimals
+    
     (1, 0), # bot 1
     (0, 1), # bot 2
     (2, 0), # bot 1
@@ -49,7 +72,6 @@ rectangles = []
 bot_1 = None
 bot_2 = None
 # you can reset the current index to change the initial position of the algorithm
-current_rect_index = 0
 bot_1_index = 0
 bot_2_index = 0
 
@@ -105,9 +127,11 @@ class Rect:
          # # for right line
         if self.walls['right'] == True:
             pygame.draw.line(screen, 'black',( self.x_coord+RECT_WIDTH, self.y_coord),( self.x_coord+RECT_WIDTH, self.y_coord+RECT_WIDTH), self.rigth_line)
-
-
+            
         
+
+
+
 
     def set_current(self, bool):
         '''Use this function to reset colors for the current rectangle and the other rectangles'''
@@ -115,8 +139,6 @@ class Rect:
             self.color = 'red'
         else:
             self.color = 'lightgreen'
-
-
         self.visited = True
 
     def __str__(self):
@@ -148,7 +170,9 @@ for i in range(RECT_NUM_VER):
 
 def find_index(x, y):
     '''This function returns the index of the rectangle in the 1D array'''
-    return y * RECT_NUM_HOR + x
+    x = math.floor(x)
+    y = math.floor(y)
+    return int(y * RECT_NUM_HOR + x)
 
 
 
@@ -164,9 +188,28 @@ clock = pygame.time.Clock()
 
 
 
-
 bot_1 = rectangles[bot_1_index]
 bot_2 = rectangles[bot_2_index]
+
+def check_valid_move(current, next):
+    
+    if next.x_coord < 0 or next.x_coord >= SCREEN_WIDTH or next.y_coord < 0 or next.y_coord >= SCREEN_HEIGHT:
+        print("Invalid move for bot")
+        return False
+
+    tolerance = RECT_WIDTH + 10
+    
+    # okay something is wrong here
+    # if not (current.x_coord - tolerance <= next.x_coord <= current.x_coord + tolerance):
+    #     print("next x-coordinate is not within the range around current x-coordinate")
+    #     return False
+    # elif not (current.y_coord - tolerance <= next.y_coord <= current.y_coord + tolerance):
+    #     print("next y-coordinate is not within the range around current y-coordinate")
+    #     return False
+
+    return True
+
+    
 
 
 
@@ -174,7 +217,9 @@ def remove_walls(current, next):
     
     '''Simple mathematics to calculate the difference in x and y values
     Then difference is used to determine this walls from each rectangle to remove'''
-
+    
+    if not check_valid_move(current, next):
+        return
     # I was making a major blunder by reversing the subtractions 
     x_diff = next.x_coord - current.x_coord
     y_diff = next.y_coord - current.y_coord
@@ -212,6 +257,8 @@ while running:
         
         next_bot_1_x, next_bot_1_y = array_of_incoming_data.pop(0)
         next_bot_2_x, next_bot_2_y = array_of_incoming_data.pop(0)
+
+        
         
         bot_1_index = find_index(next_bot_1_x, next_bot_1_y)
         bot_2_index = find_index(next_bot_2_x, next_bot_2_y)
