@@ -27,20 +27,25 @@ const int RIGHT_SPEED = 111;
 
 // threshold constants
 const int IR_FRONT_REVERSE_THRESHOLD = 995;
-const int IR_LEFT_REVERSE_THRESHOLD = 985;
-const int IR_RIGHT_REVERSE_THRESHOLD = 985;
-const int IR_FRONT_THRESHOLD = 975;
-const int IR_FRONT_SIDE_THRESHOLD = 975;
-const int IR_THRESHOLD = 1000;
+const int IR_LEFT_REVERSE_THRESHOLD = 950;
+const int IR_RIGHT_REVERSE_THRESHOLD = 950;
+const int IR_FRONT_THRESHOLD = 950;
+const int IR_STOP_TURNING_LEFTRIGHT_WHEN_FRONT_FREE_THRESHOLD = 920;
+const int IR_FRONT_SIDE_THRESHOLD = 965;
+const int IR_LEFT_THRESHOLD = 990;
 
 // delay constants
 const int LOOP_DELAY = 100;
-const int MOVE_FORWARD_DELAY = 300;
+
+const int MOVE_FORWARD_DELAY = 250;
+const int FORWARD_AFTER_TURN_LEFT_DELAY = 250;
+const int FORWARD_AFTER_TURN_RIGHT_DELAY = 250;
 const int TURN_LEFT_DELAY = 100;
 const int TURN_RIGHT_DELAY = 100;
-const int REVERSE_DELAY = 600;
+const int REVERSE_DELAY = 400;
 
-enum State {
+enum State
+{
   turningLeft,
   turningRight,
   normal
@@ -56,7 +61,8 @@ double bearing = 0;
 // using pin 7 for the CE pin, and pin 8 for the CSN pin
 RF24 radio(7, 8);
 uint8_t address[6] = "51423";
-struct {
+struct
+{
   int irLeft;
   int irLeftFront;
   int irFront;
@@ -67,7 +73,8 @@ struct {
   double bearing;
 } payload;
 
-void irRead() {
+void irRead()
+{
   // IR enable
   digitalWrite(IR_ENABLE, HIGH);
   irRight = 0;
@@ -77,7 +84,8 @@ void irRead() {
   irLeft = 0;
 
   // take NUM_OF_READINGS IR readings over a period of time and then average them
-  for (int i = 0; i < NUM_OF_READINGS; i++) {
+  for (int i = 0; i < NUM_OF_READINGS; i++)
+  {
     irLeft += analogRead(A3);
     irLeftFront += analogRead(A2);
     irFront += analogRead(A1);
@@ -93,43 +101,50 @@ void irRead() {
   irLeft /= NUM_OF_READINGS;
 }
 
-void forward() {
+void forward()
+{
   digitalWrite(LEFT_MOTOR_DIRECTION, BACKWARD);
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, BACKWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
 }
 
-void backward() {
+void backward()
+{
   digitalWrite(LEFT_MOTOR_DIRECTION, FORWARD);
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, FORWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
 }
 
-void left() {
+void left()
+{
   digitalWrite(LEFT_MOTOR_DIRECTION, BACKWARD);
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, FORWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
   bearing -= ROTATION_UNIT;
-  if (bearing < 0) {
+  if (bearing < 0)
+  {
     bearing += 2 * PI;
   }
 }
 
-void right() {
+void right()
+{
   digitalWrite(LEFT_MOTOR_DIRECTION, FORWARD);
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, BACKWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
   bearing += ROTATION_UNIT;
-  if (bearing > 2 * PI) {
+  if (bearing > 2 * PI)
+  {
     bearing -= 2 * PI;
   }
 }
 
-void stop() {
+void stop()
+{
   // need to set direction to forwards for some reason
   digitalWrite(LEFT_MOTOR_DIRECTION, FORWARD);
   analogWrite(LEFT_MOTOR_SPEED, 0);
@@ -137,44 +152,71 @@ void stop() {
   analogWrite(RIGHT_MOTOR_SPEED, 0);
 }
 
-void move() {
+void move()
+{
   // if the robot is already moving left, then finish moving left
-  if (state == turningLeft) {
+  if (state == turningLeft)
+  {
     left();
     delay(TURN_LEFT_DELAY);
-    if (irFront > IR_FRONT_THRESHOLD) {
+    forward();
+    delay(FORWARD_AFTER_TURN_LEFT_DELAY);
+    if (irFront > IR_STOP_TURNING_LEFTRIGHT_WHEN_FRONT_FREE_THRESHOLD)
+    {
       state = normal;
     }
-  } else if (state == turningRight) {
+  }
+  else if (state == turningRight)
+  {
     right();
     delay(TURN_RIGHT_DELAY);
-    if (irFront > IR_FRONT_THRESHOLD) {
+    forward();
+    delay(FORWARD_AFTER_TURN_RIGHT_DELAY);
+    if (irFront > IR_STOP_TURNING_LEFTRIGHT_WHEN_FRONT_FREE_THRESHOLD)
+    {
       state = normal;
     }
-  } else {
-    if ((irFront < IR_FRONT_REVERSE_THRESHOLD) && (irLeft < IR_LEFT_REVERSE_THRESHOLD) && (irRight < IR_RIGHT_REVERSE_THRESHOLD)) {
+  }
+  else
+  {
+    if ((irFront < IR_FRONT_REVERSE_THRESHOLD) && (irLeft < IR_LEFT_REVERSE_THRESHOLD) && (irRight < IR_RIGHT_REVERSE_THRESHOLD))
+    {
       left();
       delay(REVERSE_DELAY);
       state = turningLeft;
-    } else if (irLeftFront < IR_FRONT_SIDE_THRESHOLD) {
+    }
+
+    else if (irLeftFront < IR_FRONT_SIDE_THRESHOLD)
+    {
       right();
-    } else if (irRightFront < IR_FRONT_SIDE_THRESHOLD) {
+    }
+    else if (irRightFront < IR_FRONT_SIDE_THRESHOLD)
+    {
       left();
-    } else if (irLeft > IR_THRESHOLD) {
+    }
+
+    else if (irLeft > IR_LEFT_THRESHOLD)
+    {
       forward();
       delay(MOVE_FORWARD_DELAY);
       left();
       state = turningLeft;
-    } else if (irFront < IR_FRONT_THRESHOLD) {
+    }
+    else if (irFront < IR_FRONT_THRESHOLD)
+    {
       right();
       state = turningRight;
-    } else {
+    }
+
+    else
+    {
       forward();
     }
   }
 }
 
-void sendInfo() {
+void sendInfo()
+{
   payload.irLeft = irLeft;
   payload.irLeftFront = irLeftFront;
   payload.irFront = irFront;
@@ -189,7 +231,8 @@ void sendInfo() {
   bool report = radio.write(&payload, sizeof(payload));
   unsigned long end_timer = micros();
 
-  if (report) {
+  if (report)
+  {
     Serial.print(F("Transmission successful! "));
     Serial.print(F("Time to transmit = "));
     Serial.print(end_timer - start_timer);
@@ -210,7 +253,9 @@ void sendInfo() {
     Serial.println(payload.y);
     Serial.print("Bearing: ");
     Serial.println(payload.bearing);
-  } else {
+  }
+  else
+  {
     Serial.println(F("Transmission failed or timed out"));
   }
 
@@ -218,7 +263,8 @@ void sendInfo() {
 }
 
 // for debugging purposes
-void printInfo() {
+void printInfo()
+{
   // Serial.println("----------------------");
   // Serial.print("Left IR reading: ");
   // Serial.println(irLeft);
@@ -237,7 +283,8 @@ void printInfo() {
   // Serial.println("----------------------");
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
   pinMode(LEFT_MOTOR_SPEED, OUTPUT);
@@ -245,9 +292,12 @@ void setup() {
   pinMode(IR_ENABLE, OUTPUT);
   pinMode(TOP_LED, OUTPUT);
 
-  if (!radio.begin()) {
+  if (!radio.begin())
+  {
     Serial.println(F("radio hardware is not responding!"));
-    while (1) {}
+    while (1)
+    {
+    }
   }
 
   radio.setPALevel(RF24_PA_LOW);
@@ -256,7 +306,8 @@ void setup() {
   radio.stopListening();
 }
 
-void loop() {
+void loop()
+{
   digitalWrite(TOP_LED, HIGH);
   irRead();
   move();
