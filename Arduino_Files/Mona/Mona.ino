@@ -1,5 +1,6 @@
-#include <MsTimer2.h>
+#include "MsTimer2.h"
 #include "RF24.h"
+#include <stdlib.h>
 #include <math.h>
 
 #define ID 1
@@ -198,9 +199,17 @@ void move()
   {
     if ((irFront < IR_FRONT_REVERSE_THRESHOLD) && (irLeft < IR_LEFT_REVERSE_THRESHOLD) && (irRight < IR_RIGHT_REVERSE_THRESHOLD))
     {
-      left();
-      delay(REVERSE_DELAY);
-      state = turningLeft;
+      if (rand() < 0.8)
+      {
+        left();
+        delay(REVERSE_DELAY);
+        state = turningLeft;
+      }
+      else
+      {
+        forward();
+        delay(MOVE_FORWARD_DELAY);
+      }
     }
 
     else if (irLeftFront < IR_FRONT_SIDE_THRESHOLD)
