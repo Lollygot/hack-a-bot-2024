@@ -345,7 +345,7 @@ void loop()
   digitalWrite(TOP_LED, HIGH);
   irRead();
   move();
-  // sendInfo();
+  sendInfo();
   printInfo();
   digitalWrite(TOP_LED, LOW);
   delay(LOOP_DELAY);
