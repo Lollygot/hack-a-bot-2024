@@ -32,6 +32,15 @@ maze = {(x, y): {'up': False, 'right': False, 'down': False, 'left': False}
         for x in range(n) for y in range(n)}
 
 
+def clockwise_to_counterclockwise(clockwise_radians):
+    # radians
+    counterclockwise_radians = 2 * math.pi - clockwise_radians
+    # degrees
+    counterclockwise_degrees = math.degrees(counterclockwise_radians)
+
+    return counterclockwise_radians, counterclockwise_degrees
+
+
 def generate_rotation_matrix(theta):
     """Generate a 2D rotation matrix according to the given angle"""
     radians = np.radians(theta)
