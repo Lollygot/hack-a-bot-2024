@@ -38,24 +38,39 @@ void loop() {
   if (radio.available()) {
     uint8_t bytes = radio.getPayloadSize();
     radio.read(&payload, bytes);
-    Serial.print(F("Received "));
-    Serial.print(bytes);
-    Serial.println(F(" bytes:"));
-    Serial.print("irLeft: ");
-    Serial.println(payload.irLeft);
-    Serial.print("irLeftFront: ");
-    Serial.println(payload.irLeftFront);
-    Serial.print("irFront: ");
-    Serial.println(payload.irFront);
-    Serial.print("irRightFront: ");
-    Serial.println(payload.irRightFront);
-    Serial.print("irRight: ");
-    Serial.println(payload.irRight);
-    Serial.print("x: ");
-    Serial.println(payload.x);
-    Serial.print("y: ");
-    Serial.println(payload.y);
-    Serial.print("Bearing: ");
-    Serial.println(payload.bearing);
+    // avoid blocking calls
+    if (Serial.availableForWrite() >= sizeof(payload)) {
+      Serial.write(reinterpret_cast<char*>(&payload), sizeof(payload));
+
+      // for debugging bytes sent over
+      // char* temp = static_cast<char*>(static_cast<void*>(&payload));
+      // for (int i = 0; i < sizeof(payload); i++) {
+      //   for (int j = 8 * sizeof(char) - 1; j >= 0; j--) {
+      //     Serial.print((temp[i] >> j) & 1);
+      //   }
+      //   Serial.print(" ");
+      // }
+      // Serial.println();
+    }
+    // for debugging values received
+    // Serial.print(F("Received "));
+    // Serial.print(bytes);
+    // Serial.println(F(" bytes:"));
+    // Serial.print("irLeft: ");
+    // Serial.println(payload.irLeft);
+    // Serial.print("irLeftFront: ");
+    // Serial.println(payload.irLeftFront);
+    // Serial.print("irFront: ");
+    // Serial.println(payload.irFront);
+    // Serial.print("irRightFront: ");
+    // Serial.println(payload.irRightFront);
+    // Serial.print("irRight: ");
+    // Serial.println(payload.irRight);
+    // Serial.print("x: ");
+    // Serial.println(payload.x);
+    // Serial.print("y: ");
+    // Serial.println(payload.y);
+    // Serial.print("Bearing: ");
+    // Serial.println(payload.bearing);
   }
 }
