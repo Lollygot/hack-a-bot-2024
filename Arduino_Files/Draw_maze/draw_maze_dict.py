@@ -11,7 +11,7 @@ robot_position = [0, 0]
 unblocked_threshold = 950
 
 # right, right_forward, forward, left_forward, left
-direction_offsets = [(0, 1), (1, 1), (1, 0), (-1, 1), (0, -1)] 
+direction_offsets = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1)] 
 
 
 n = 5  # assume maze size 5x5
@@ -44,6 +44,8 @@ def update_blockage(maze, position, sensor_data, block_threshold):
         dx, dy = offset
         neighbor_x, neighbor_y = x + dx, y + dy
         sensor_value = sensor_data[list(directions.keys()).index(direction)]
+
+        print("Sensor value: ", sensor_value, " at ", (x, y), " direction: ", direction)
 
         if sensor_value is not None and 0 <= neighbor_x < n and 0 <= neighbor_y < n:
             if sensor_value < block_threshold:
@@ -96,19 +98,32 @@ if __name__ == "__main__":
         # ([1023, 1023, 950, 1023, 1023], (2, 2)),
         # ([1023, 940, 940, 940, 1023], (3, 3)),
         # ([950, 950, 1023, 950, 950], (4, 4)),
+
+        # right side
         ([930, 950, 1023, 950, 930], (0, 0)),
         ([930, 950, 950, 950, 930], (1, 0)),
         ([930, 950, 950, 950, 930], (2, 0)),
         ([930, 950, 950, 950, 930], (3, 0)),
         ([949, 950, 1023, 950, 949], (4, 0)),
 
+        # bottom side
         ([950, 950, 930, 950, 950], (0, 1)),
         ([950, 950, 930, 950, 950], (0, 2)),
         ([950, 950, 930, 950, 950], (0, 3)),
         ([950, 950, 930, 950, 950], (0, 4)),
 
+        ([950, 950, 930, 950, 950], (3, 4)),
 
-        ([950, 950, 930, 950, 950], (4, 4))
+        # left side
+        ([950, 950, 950, 950, 930], (0, 2)),
+        ([950, 950, 950, 950, 930], (1, 2)),
+        ([950, 950, 950, 950, 930], (2, 2)),
+
+        # left top
+        ([950, 950, 950, 930, 950], (3, 3)),
+
+        # right top
+        ([950, 930, 950, 930, 950], (2, 4))
 
 
     ]
