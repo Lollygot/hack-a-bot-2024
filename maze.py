@@ -1,42 +1,18 @@
 import pygame
 import math
 import serial
+import struct
 
-serial_port = '/dev/ttyUSB0' 
-baud_rate = 9600  
-ser = serial.Serial(serial_port, baud_rate)
+PAYLOAD_SIZE = 24
 
-
-
-
+ser = serial.Serial("COM3", 115200)
 
 bot_1_x, bot_1_y = 0, 2
 bot_2_x, bot_2_y = 2, 0
 
-
 # anything from port
-# sensor_data_bot_1 = [
-#     # L, FL, F, FR, R
-#     ([930, 1000, 1023, 1000, 1023], 'E'),
-#     ([930, 1000, 1023, 1000, 1023], 'E'),
-#     ([930, 1000, 1023, 1000, 930], 'W'),
-#     ([1023, 1000, 930, 1000, 950], 'W'),
-#     ([930, 950, 1023, 1023, 1023], 'N'),
-#     ([930, 930, 1023, 1000, 1023], 'N'),
-    
-# ]
-
-# sensor_data_bot_2 = [
-#     # L, FL, F, FR, R
-#     ([930, 1000, 1023, 1000, 1023], 'W'),
-#     ([930, 1000, 1023, 1000, 1023], 'E'),
-#     ([930, 1000, 1023, 1000, 930], 'S'),
-#     ([1023, 1000, 930, 1000, 950], 'W'),
-#     ([930, 950, 1023, 1023, 1023], 'W'),
-#     ([930, 930, 1023, 1000, 1023], 'N'),
-    
-# ]
-
+# sensor_data_bot_1 = []
+# sensor_data_bot_2 = []
 
 # JUST KEEP APPENDING THE DIRECTIONS IF THE BOT IS MOVING
 bot_1_dir = [
@@ -48,7 +24,6 @@ bot_1_dir = [
     'N',
 
 ]
-
 bot_2_dir = [
     'W',
     'E',
@@ -56,13 +31,7 @@ bot_2_dir = [
     'W',
     'W',
     'N',
-    
 ]
-
-
-
-
-
 
 # program variables
 SCREEN_WIDTH = 600
@@ -76,16 +45,11 @@ RECT_NUM_HOR = int(SCREEN_WIDTH/RECT_WIDTH)
 RECT_NUM_VER = int(SCREEN_HEIGHT/RECT_HEIGHT)
 matrix_size = RECT_NUM_VER * RECT_NUM_HOR
 
-
-
 # frames per second
 frames_per_second = 0.5
 
-
-
 # this array is for all of the rectangles
 rectangles = []
-
 
 bot_1 = None
 bot_2 = None
@@ -93,15 +57,10 @@ bot_2 = None
 bot_1_index = 0
 bot_2_index = 0
 
-
-
 # this is used for the main loop
 running = True
 
-
-
-
-# rect class 
+# rect class
 class Rect:
     '''Class for each of the rectangle block displayed on screen including the four lines surrounding the rectangles'''
 
@@ -127,7 +86,6 @@ class Rect:
         # for the rectangle between the lines
         self.rectangle = pygame.Rect(x, y, x+RECT_WIDTH, y+RECT_HEIGHT )
 
-
     def draw(self, screen):
         '''Draws the main rectangle and draws all the four walls depending on the value of booleans'''
         pygame.draw.rect(screen, self.color, self.rectangle)
@@ -143,11 +101,6 @@ class Rect:
          # # for right line
         if self.walls['right'] == True:
             pygame.draw.line(screen, 'black',( self.x_coord+RECT_WIDTH, self.y_coord),( self.x_coord+RECT_WIDTH, self.y_coord+RECT_WIDTH), self.rigth_line)
-            
-        
-
-
-
 
     def set_current(self, bool):
         '''Use this function to reset colors for the current rectangle and the other rectangles'''
@@ -161,18 +114,14 @@ class Rect:
         '''return the string with the coordinates of the rectangle'''
         return "Coordinates: "+ str(self.x_coord)+ ', ' + str(self.y_coord)
 
-
-
-
-
 # starting coordinates
 x, y = 0, 0
-# intial setup 
+# intial setup
 # adds the rectangle classes to the array
 for i in range(RECT_NUM_VER):
 
     for j in range(RECT_NUM_HOR):
-        
+
         rect = Rect(x, y, j + i*RECT_NUM_HOR, j, i)
         # print(rect)
         rectangles.append(rect)
@@ -180,24 +129,24 @@ for i in range(RECT_NUM_VER):
     y += RECT_HEIGHT
     x = 0
 
-
-
-
-
-
 def find_index(x, y):
     '''This function returns the index of the rectangle in the 1D array'''
     x = math.floor(x)
     y = math.floor(y)
     return int(y * (RECT_NUM_HOR) + x)
 
-
-def process_sensor_data():
+def process_sensor_data(data):
     '''EVERYTHING RELATED TO THE SENSOR DATA WILL BE DONE HERE'''
-    # This function can simply append to bot_1_dir and bot_2_dir 
-    # and the main loop will take care of the rest
+    #
     pass
-    
+
+
+
+
+
+
+
+
 
 
 
@@ -208,30 +157,22 @@ pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
-
-
-
-
-
 bot_1 = rectangles[find_index(bot_1_x, bot_1_y)]
 bot_1.set_current(False)
 bot_2 = rectangles[find_index(bot_2_x, bot_2_y)]
 bot_2.set_current(False)
 
-
-
-
 def remove_walls(current, next):
-    
+
     '''Simple mathematics to calculate the difference in x and y values
     Then difference is used to determine this walls from each rectangle to remove'''
-    
+
     # if not check_valid_move(current, next):
     #     return
-    # I was making a major blunder by reversing the subtractions 
+    # I was making a major blunder by reversing the subtractions
     x_diff = next.x_coord - current.x_coord
     y_diff = next.y_coord - current.y_coord
-    
+
     if x_diff == RECT_WIDTH:  # Moving to the right
         current.walls['right'] = False
         next.walls['left'] = False
@@ -244,7 +185,7 @@ def remove_walls(current, next):
     elif y_diff == -RECT_HEIGHT:  # Moving upwards
         current.walls['top'] = False
         next.walls['bottom'] = False
-        
+
 def get_next_index(current, direction):
     '''This function returns the index of the next rectangle in the 1D array'''
     if direction == 'N':
@@ -261,61 +202,80 @@ def get_next_index(current, direction):
 bot_1_direction = ''
 bot_2_direction = ''
 
-
 while running:
     # for the quit button
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    
-    
+    change = False
+
     # to clear the screen after every frame
     # screen.fill((0, 0, 0))
-    
+
     # next two elements are popped from the array
-    
-    if bot_1_dir and bot_2_dir:
+
+    if bot_1_dir:
         screen.fill((0, 0, 0))
         bot_1_direction = bot_1_dir.pop(0)
-        bot_2_direction = bot_2_dir.pop(0)
-        
         bot_1_index = get_next_index(bot_1, bot_1_direction)
-        bot_2_index = get_next_index(bot_2, bot_2_direction)
-        
         remove_walls(bot_1, rectangles[bot_1_index])
-        remove_walls(bot_2, rectangles[bot_2_index])
-        
         bot_1 = rectangles[bot_1_index]
-        bot_2 = rectangles[bot_2_index]
-        
         bot_1.set_current(True)
+
+        for rectangle in rectangles:
+            rectangle.draw(screen)
+
+        bot_1.set_current(False)
+        bot_2.set_current(False)
+
+        change = True
+
+    if bot_2_dir:
+        screen.fill((0, 0, 0))
+        bot_2_direction = bot_2_dir.pop(0)
+        bot_2_index = get_next_index(bot_2, bot_2_direction)
+        remove_walls(bot_2, rectangles[bot_2_index])
+        bot_2 = rectangles[bot_2_index]
         bot_2.set_current(True)
-    
+
+
+        # Drawing the rectangles
+
         # Drawing the rectangles
         for rectangle in rectangles:
             rectangle.draw(screen)
-            
+
         bot_1.set_current(False)
         bot_2.set_current(False)
-        
-    else:
+
+        change = True
+
+    if not change:
         for rectangle in rectangles:
             rectangle.set_current(False)
             rectangle.draw(screen)
-        try:
-            # while True:
-            serial_input = ser.readline().decode().strip()
-            print("Received:", serial_input)
-            
-            process_sensor_data(serial_input)
 
-        except KeyboardInterrupt:
-            ser.close()
-            print("Serial port closed")
-            
     pygame.display.flip()
 
-    clock.tick(frames_per_second)  # limits FPS
+    # read any input data
+    data = ser.read(PAYLOAD_SIZE)
 
+    # use short and float instead of int and double since arduino data type sizes are smaller than standard
+    id, irLeft, irLeftFront, irFront, irRightFront, irRight, x, y, bearing = struct.unpack("<hhhhhhfff", data)
+    process_sensor_data({
+        "id": id,
+        "irLeft": irLeft,
+        "irLeftFront": irLeftFront,
+        "irFront": irFront,
+        "irRightFront": irRightFront,
+        "irRight": irRight,
+        "x": x,
+        "y": y,
+        "bearing": bearing
+    })
+
+    clock.tick(frames_per_second)
+
+ser.close()
 pygame.quit()
