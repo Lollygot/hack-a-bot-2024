@@ -1,5 +1,6 @@
 #include <MsTimer2.h>
 #include "RF24.h"
+#include <math.h>
 
 #define ID 1
 #define PI 3.14159265358979323846
@@ -58,7 +59,7 @@ State state = normal;
 const double ROTATION_UNIT = 4 * PI / 49;
 
 // length of 1 forward
-const double FORWARD_UNIT = 0;
+const double FORWARD_UNIT = 2.0 / 17.0;
 
 double bearing = 0;
 
@@ -115,6 +116,8 @@ void forward()
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, BACKWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
+  x += sin(bearing) * FORWARD_UNIT;
+  y += cos(bearing) * FORWARD_UNIT;
 }
 
 void backward()
@@ -123,6 +126,8 @@ void backward()
   analogWrite(LEFT_MOTOR_SPEED, LEFT_SPEED);
   digitalWrite(RIGHT_MOTOR_DIRECTION, FORWARD);
   analogWrite(RIGHT_MOTOR_SPEED, RIGHT_SPEED);
+  x -= sin(bearing) * FORWARD_UNIT;
+  y -= cos(bearing) * FORWARD_UNIT;
 }
 
 void left()
@@ -168,6 +173,8 @@ void move()
     left();
     delay(TURN_LEFT_DELAY);
     forward();
+    x += sin(bearing) * FORWARD_UNIT * ((FORWARD_AFTER_TURN_LEFT_DELAY - LOOP_DELAY) / 100.0);
+    y += cos(bearing) * FORWARD_UNIT * ((FORWARD_AFTER_TURN_LEFT_DELAY - LOOP_DELAY) / 100.0);
     delay(FORWARD_AFTER_TURN_LEFT_DELAY);
     if (irFront > IR_STOP_TURNING_LEFTRIGHT_WHEN_FRONT_FREE_THRESHOLD)
     {
@@ -179,6 +186,8 @@ void move()
     right();
     delay(TURN_RIGHT_DELAY);
     forward();
+    x += sin(bearing) * FORWARD_UNIT * ((FORWARD_AFTER_TURN_RIGHT_DELAY - LOOP_DELAY) / 100.0);
+    y += cos(bearing) * FORWARD_UNIT * ((FORWARD_AFTER_TURN_RIGHT_DELAY - LOOP_DELAY) / 100.0);
     delay(FORWARD_AFTER_TURN_RIGHT_DELAY);
     if (irFront > IR_STOP_TURNING_LEFTRIGHT_WHEN_FRONT_FREE_THRESHOLD)
     {
@@ -206,6 +215,8 @@ void move()
     else if (irLeft > IR_LEFT_THRESHOLD)
     {
       forward();
+      x += sin(bearing) * FORWARD_UNIT * ((MOVE_FORWARD_DELAY - LOOP_DELAY) / 100.0);
+      y += cos(bearing) * FORWARD_UNIT * ((MOVE_FORWARD_DELAY - LOOP_DELAY) / 100.0);
       delay(MOVE_FORWARD_DELAY);
       left();
       state = turningLeft;
@@ -274,6 +285,8 @@ void sendInfo()
 void printInfo()
 {
   // Serial.println("----------------------");
+  // Serial.print("ID: ");
+  // Serial.println(ID);
   // Serial.print("Left IR reading: ");
   // Serial.println(irLeft);
   // Serial.print("Front Left IR reading: ");
@@ -286,8 +299,12 @@ void printInfo()
   // Serial.println(irRight);
   // Serial.print("State: ");
   // Serial.println(state);
-  Serial.print("Bearing: ");
-  Serial.println(bearing);
+  // Serial.print("x: ");
+  // Serial.println(x);
+  // Serial.print("y: ");
+  // Serial.println(y);
+  // Serial.print("Bearing: ");
+  // Serial.println(bearing);
   // Serial.println("----------------------");
 }
 
@@ -319,8 +336,8 @@ void loop()
   digitalWrite(TOP_LED, HIGH);
   irRead();
   move();
-  sendInfo();
-  // printInfo();
+  // sendInfo();
+  printInfo();
   digitalWrite(TOP_LED, LOW);
   delay(LOOP_DELAY);
 }
