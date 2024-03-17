@@ -1,4 +1,5 @@
 #include <MsTimer2.h>
+#include "RF24.h"
 
 #define PI 3.14159265358979323846
 
@@ -24,6 +25,7 @@ const int RIGHT_MOTOR_SPEED = 9;
 const int LEFT_SPEED = 111;
 const int RIGHT_SPEED = 111;
 
+// threshold constants
 const int IR_FRONT_REVERSE_THRESHOLD = 995;
 const int IR_LEFT_REVERSE_THRESHOLD = 985;
 const int IR_RIGHT_REVERSE_THRESHOLD = 985;
@@ -31,8 +33,8 @@ const int IR_FRONT_THRESHOLD = 975;
 const int IR_FRONT_SIDE_THRESHOLD = 975;
 const int IR_THRESHOLD = 1000;
 
+// delay constants
 const int LOOP_DELAY = 100;
-
 const int MOVE_FORWARD_DELAY = 300;
 const int TURN_LEFT_DELAY = 100;
 const int TURN_RIGHT_DELAY = 100;
@@ -51,7 +53,19 @@ const double ROTATION_UNIT = 4 * PI / 49;
 
 double bearing = 0;
 
-int counter = 0;
+// using pin 7 for the CE pin, and pin 8 for the CSN pin
+RF24 radio(7, 8);
+uint8_t address[6] = "51423";
+struct {
+  int irLeft;
+  int irLeftFront;
+  int irFront;
+  int irRightFront;
+  int irRight;
+  double x;
+  double y;
+  double bearing;
+} payload;
 
 void irRead() {
   // IR enable
@@ -160,6 +174,49 @@ void move() {
   }
 }
 
+void sendInfo() {
+  payload.irLeft = irLeft;
+  payload.irLeftFront = irLeftFront;
+  payload.irFront = irFront;
+  payload.irRightFront = irRightFront;
+  payload.irRight = irRight;
+  // TODO: change
+  payload.x = 0;
+  payload.y = 0;
+  payload.bearing = bearing;
+
+  unsigned long start_timer = micros();
+  bool report = radio.write(&payload, sizeof(payload));
+  unsigned long end_timer = micros();
+
+  if (report) {
+    Serial.print(F("Transmission successful! "));
+    Serial.print(F("Time to transmit = "));
+    Serial.print(end_timer - start_timer);
+    Serial.println(F("Sent: "));
+    Serial.print("irLeft: ");
+    Serial.println(payload.irLeft);
+    Serial.print("irLeftFront: ");
+    Serial.println(payload.irLeftFront);
+    Serial.print("irFront: ");
+    Serial.println(payload.irFront);
+    Serial.print("irRightFront: ");
+    Serial.println(payload.irRightFront);
+    Serial.print("irRight: ");
+    Serial.println(payload.irRight);
+    Serial.print("x: ");
+    Serial.println(payload.x);
+    Serial.print("y: ");
+    Serial.println(payload.y);
+    Serial.print("Bearing: ");
+    Serial.println(payload.bearing);
+  } else {
+    Serial.println(F("Transmission failed or timed out"));
+  }
+
+  delay(1000);
+}
+
 // for debugging purposes
 void printInfo() {
   // Serial.println("----------------------");
@@ -188,14 +245,22 @@ void setup() {
   pinMode(IR_ENABLE, OUTPUT);
   pinMode(TOP_LED, OUTPUT);
 
-  // initialise movement to forwards
-  forward();
+  if (!radio.begin()) {
+    Serial.println(F("radio hardware is not responding!"));
+    while (1) {}
+  }
+
+  radio.setPALevel(RF24_PA_LOW);
+  radio.setPayloadSize(sizeof(payload));
+  radio.openWritingPipe(address);
+  radio.stopListening();
 }
 
 void loop() {
   digitalWrite(TOP_LED, HIGH);
   irRead();
   move();
+  sendInfo();
   // printInfo();
   digitalWrite(TOP_LED, LOW);
   delay(LOOP_DELAY);
