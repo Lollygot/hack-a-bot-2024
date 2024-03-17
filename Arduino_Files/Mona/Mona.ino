@@ -1,6 +1,7 @@
 #include <MsTimer2.h>
 #include "RF24.h"
 
+#define ID 1
 #define PI 3.14159265358979323846
 
 // motor direction mappings
@@ -56,13 +57,20 @@ State state = normal;
 // angle of 1 left/right rotation
 const double ROTATION_UNIT = 4 * PI / 49;
 
+// length of 1 forward
+const double FORWARD_UNIT = 0;
+
 double bearing = 0;
+
+double x = 0;
+double y = 0;
 
 // using pin 7 for the CE pin, and pin 8 for the CSN pin
 RF24 radio(7, 8);
 uint8_t address[6] = "51423";
 struct
 {
+  int id;
   int irLeft;
   int irLeftFront;
   int irFront;
@@ -217,14 +225,14 @@ void move()
 
 void sendInfo()
 {
+  payload.id = ID;
   payload.irLeft = irLeft;
   payload.irLeftFront = irLeftFront;
   payload.irFront = irFront;
   payload.irRightFront = irRightFront;
   payload.irRight = irRight;
-  // TODO: change
-  payload.x = 0;
-  payload.y = 0;
+  payload.x = x;
+  payload.y = y;
   payload.bearing = bearing;
 
   unsigned long start_timer = micros();

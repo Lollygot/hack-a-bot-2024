@@ -5,6 +5,7 @@
 RF24 radio(7, 8);
 uint8_t address[6] = "51423";
 struct {
+  int id;
   int irLeft;
   int irLeftFront;
   int irFront;
