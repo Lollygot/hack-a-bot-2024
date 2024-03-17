@@ -1,20 +1,8 @@
 import pygame
 import math
-# import serial
-
-# serial_port = '/dev/ttyUSB0' 
-# baud_rate = 9600  
-# ser = serial.Serial(serial_port, baud_rate)
-# try:
-#     while True:
-#         serial_input = ser.readline().decode().strip()
-#         print("Received:", serial_input)
-
-# except KeyboardInterrupt:
-#     ser.close()
-#     print("Serial port closed")
-
-
+import threading
+import serial
+import time
 
 
 bot_1_x, bot_1_y = 2, 0
@@ -41,6 +29,8 @@ array_of_incoming_data = [
     (0, 0), # bot 1
     (1, 1), # bot 2
 ]
+
+
 
 
 
@@ -239,65 +229,104 @@ def remove_walls(current, next):
 
 
 
-while running:
-    # for the quit button
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
 
     
     
-    # to clear the screen after every frame
-    # screen.fill((0, 0, 0))
-    
-    # next two elements are popped from the array
-    if len(array_of_incoming_data) > 0:
-        screen.fill((0, 0, 0))
-        
-        
-        next_bot_1_x, next_bot_1_y = array_of_incoming_data.pop(0)
-        next_bot_2_x, next_bot_2_y = array_of_incoming_data.pop(0)
+# pygame events
+def handle_events():
+    running = True
+    while running:
+        # for the quit button
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
         
         
-        bot_1_index = find_index(next_bot_1_x, next_bot_1_y)
-        bot_2_index = find_index(next_bot_2_x, next_bot_2_y)
-        print("Bot 1 index")
-        print(bot_2_index)
-        print("Bot 2 index")
-        print(bot_2_index)
+        # to clear the screen after every frame
+        # screen.fill((0, 0, 0))
         
-        
-        remove_walls(bot_1, rectangles[bot_1_index])
-        remove_walls(bot_2, rectangles[bot_2_index])
-        
-        bot_1 = rectangles[bot_1_index]
-        bot_2 = rectangles[bot_2_index]
-        
-        bot_1.set_current(True)
-        bot_2.set_current(True)
-        
-
-    
-
-
-    
-
-    
-        # Drawing the rectangles
-        for rectangle in rectangles:
-            rectangle.draw(screen)
+        # next two elements are popped from the array
+        if len(array_of_incoming_data) > 0:
+            screen.fill((0, 0, 0))
             
-        bot_1.set_current(False)
-        bot_2.set_current(False)
-        
-    else:
-        for rectangle in rectangles:
-            rectangle.set_current(False)
-            rectangle.draw(screen)
             
-    pygame.display.flip()
+            next_bot_1_x, next_bot_1_y = array_of_incoming_data.pop(0)
+            next_bot_2_x, next_bot_2_y = array_of_incoming_data.pop(0)
 
-    clock.tick(frames_per_second)  # limits FPS
+            
+            
+            bot_1_index = find_index(next_bot_1_x, next_bot_1_y)
+            bot_2_index = find_index(next_bot_2_x, next_bot_2_y)
+            print("Bot 1 index")
+            print(bot_2_index)
+            print("Bot 2 index")
+            print(bot_2_index)
+            
+            
+            remove_walls(bot_1, rectangles[bot_1_index])
+            remove_walls(bot_2, rectangles[bot_2_index])
+            
+            bot_1 = rectangles[bot_1_index]
+            bot_2 = rectangles[bot_2_index]
+            
+            bot_1.set_current(True)
+            bot_2.set_current(True)
+            
+
+        
+
+
+        
+
+        
+            # Drawing the rectangles
+            for rectangle in rectangles:
+                rectangle.draw(screen)
+                
+            bot_1.set_current(False)
+            bot_2.set_current(False)
+            
+        else:
+            for rectangle in rectangles:
+                rectangle.set_current(False)
+                rectangle.draw(screen)
+                
+        pygame.display.flip()
+
+        clock.tick(frames_per_second)  # limits FPS
+        
+
+# Function to handle serial communication
+def serial_communication():
+    # Define the serial port and baud rate
+    serial_port = '/dev/ttyUSB0'  
+    baud_rate = 9600  
+
+    ser = serial.Serial(serial_port, baud_rate)
+
+    try:
+        while True:
+            serial_input = ser.readline().decode().strip()
+            
+            print("Received:", serial_input)
+            time.sleep(0.1)
+            
+
+    except KeyboardInterrupt:
+        ser.close()
+        print("Serial port closed")
+
+pygame_thread = threading.Thread(target=handle_events)
+serial_thread = threading.Thread(target=serial_communication)
+
+# Start both threads
+pygame_thread.start()
+serial_thread.start()
+
+# Wait for both threads to finish
+pygame_thread.join()
+serial_thread.join()
+
 
 pygame.quit()
